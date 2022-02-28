@@ -8,4 +8,4 @@ press the "s" key - take a screenshot
 press "r" key - record video (ESC - cancel record)
 
 
-![ascii_pixel_art](screenshot/1.jpg "ascii_pixel_art")
+![ascii_pixel_art](1.jpg "ascii_pixel_art")

@@ -11,6 +11,7 @@ class AsciiColorArtConverter(AsciiArtConverter):
         super().__init__(input_path, output_path, font_size)
         self.COLOR_LVL = color_lvl
         self.image, self.gray_image = self.get_image()
+        self.cv2_image = None
         self.PALETTE, self.COLOR_COEFF = self.create_palette()
 
     def draw_converted_image(self) -> None:
@@ -56,6 +57,7 @@ class AsciiColorArtVideoConverter(AsciiArtVideoConverter):
         super().__init__(input_path, output_path, font_size)
         self.COLOR_LVL = color_lvl
         self.image, self.gray_image = self.get_image()
+        self.cv2_image = None
         self.ASCII_CHARS = ' ixzao*#MW&8%B@$'
         self.PALETTE, self.COLOR_COEFF = self.create_palette()
         self.rec_fps = 25

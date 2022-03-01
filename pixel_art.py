@@ -1,5 +1,6 @@
 import pygame as pg
 import numpy as np
+from numba import njit
 import pygame.gfxdraw
 import cv2
 
@@ -12,7 +13,6 @@ class PixelArtConverter:
         self.PIXEL_SIZE = pixel_size
         self.COLOR_LVL = color_lvl
         self.image = self.get_image()
-        self.cv2_image = None
         self.RES = self.WIDTH, self.HEIGHT = self.image.shape[0], self.image.shape[1]
         self.surface = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
@@ -83,7 +83,7 @@ class PixelArtVideoConverter:
         self.PALETTE, self.COLOR_COEFF = self.create_palette()
         self.rec_fps = 25
         self.record = False
-        self.recorder = cv2.VideoWriter(output_path + '\\pixel_art.mp4', cv2.VideoWriter_fourcc(*'mp4v'),
+        self.recorder = cv2.VideoWriter(output_path + '\\pixel.mp4', cv2.VideoWriter_fourcc(*'mp4v'),
                                         self.rec_fps, self.RES)
 
     @staticmethod
@@ -113,7 +113,8 @@ class PixelArtVideoConverter:
 
     def draw_converted_image(self) -> None:
         self.image = self.get_image()
-        array_of_values = accelerate_conversion(self.image, self.WIDTH, self.HEIGHT, self.COLOR_COEFF, self.PIXEL_SIZE)
+        array_of_values = self.accelerate_conversion(self.image, self.WIDTH, self.HEIGHT, self.COLOR_COEFF,
+                                                     self.PIXEL_SIZE)
         for color_key, (x, y) in array_of_values:
             color = self.PALETTE[color_key]
             pygame.gfxdraw.box(self.surface, (x, y, self.PIXEL_SIZE, self.PIXEL_SIZE), color)

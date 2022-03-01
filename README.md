@@ -7,5 +7,6 @@ press the "s" key - take a screenshot
 
 press "r" key - record video (ESC - cancel record)
 
+(All saving is automatically - img, video)
 
 ![ascii_pixel_art](1.jpg "ascii_pixel_art")

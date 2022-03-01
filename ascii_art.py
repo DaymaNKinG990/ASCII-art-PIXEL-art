@@ -9,7 +9,6 @@ class AsciiArtConverter:
         self.input_path = input_path
         self.output_path = output_path
         self.image = self.get_image()
-        self.cv2_image = None
         self.RES = self.WIDTH, self.HEIGHT = self.image.shape[0], self.image.shape[1]
         self.surface = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()

@@ -3,15 +3,21 @@ import numpy as np
 from numba import njit
 import cv2
 
-from img.ascii_art import AsciiArtConverter, AsciiArtVideoConverter
 
-
-class AsciiColorArtConverter(AsciiArtConverter):
+class AsciiColorArtConverter:
     def __init__(self, input_path: str, output_path: str, font_size: int = 12, color_lvl: int = 8) -> None:
-        super().__init__(input_path, output_path, font_size)
+        pg.init()
+        self.input_path = input_path
+        self.output_path = output_path
         self.COLOR_LVL = color_lvl
         self.image, self.gray_image = self.get_image()
-        self.cv2_image = None
+        self.RES = self.WIDTH, self.HEIGHT = self.image.shape[0], self.image.shape[1]
+        self.surface = pg.display.set_mode(self.RES)
+        self.clock = pg.time.Clock()
+        self.ASCII_CHARS = ' ixzao*#MW&8%B@$'
+        self.ASCII_COEFF = 255 // (len(self.ASCII_CHARS) - 1)
+        self.font = pg.font.SysFont('Сourier', font_size, bold=True)
+        self.CHAR_STEP = int(font_size * 0.6)
         self.PALETTE, self.COLOR_COEFF = self.create_palette()
 
     def draw_converted_image(self) -> None:
@@ -45,30 +51,50 @@ class AsciiColorArtConverter(AsciiArtConverter):
         gray_image = cv2.cvtColor(transposed_image, cv2.COLOR_BGR2GRAY)
         return image, gray_image
 
+    def draw_cv2_image(self) -> None:
+        resized_cv2_image = cv2.resize(self.cv2_image, (640, 360), interpolation=cv2.INTER_AREA)
+        cv2.imshow('img', resized_cv2_image)
+
+    def draw(self) -> None:
+        self.surface.fill('black')
+        self.draw_converted_image()
+        self.draw_cv2_image()
+
     def save_image(self) -> None:
         pygame_image = pg.surfarray.array3d(self.surface)
         cv2_img = cv2.transpose(pygame_image)
         cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_RGB2BGR)
         cv2.imwrite(self.output_path + '\\ascii_color_art.jpg', cv2_img)
 
+    def run(self) -> None:
+        self.draw()
+        pg.display.set_caption(str(self.clock.get_fps()))
+        pg.display.flip()
+        self.clock.tick()
+        self.save_image()
+        exit()
 
-class AsciiColorArtVideoConverter(AsciiArtVideoConverter):
+
+class AsciiColorArtVideoConverter:
     def __init__(self, input_path: str, output_path: str, font_size: int = 12, color_lvl=8) -> None:
-        super().__init__(input_path, output_path, font_size)
+        pg.init()
+        self.input_path = input_path
+        self.output_path = output_path
+        self.capture = cv2.VideoCapture(input_path)
         self.COLOR_LVL = color_lvl
         self.image, self.gray_image = self.get_image()
-        self.cv2_image = None
+        self.RES = self.WIDTH, self.HEIGHT = self.image.shape[0], self.image.shape[1]
+        self.surface = pg.display.set_mode(self.RES)
+        self.clock = pg.time.Clock()
         self.ASCII_CHARS = ' ixzao*#MW&8%B@$'
+        self.ASCII_COEFF = 255 // (len(self.ASCII_CHARS) - 1)
+        self.font = pg.font.SysFont('Сourier', font_size, bold=True)
+        self.CHAR_STEP = int(font_size * 0.6)
         self.PALETTE, self.COLOR_COEFF = self.create_palette()
         self.rec_fps = 25
         self.record = False
-        self.recorder = cv2.VideoWriter(output_path + '\\ascii.mp4', cv2.VideoWriter_fourcc(*'mp4v'),
+        self.recorder = cv2.VideoWriter(output_path + '\\ascii_color.mp4', cv2.VideoWriter_fourcc(*'mp4v'),
                                         self.rec_fps, self.RES)
-
-    def get_frame(self) -> cv2:
-        frame = pg.surfarray.array3d(self.surface)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        return cv2.transpose(frame)
 
     @staticmethod
     @njit(fastmath=True)
@@ -82,6 +108,20 @@ class AsciiColorArtVideoConverter(AsciiArtVideoConverter):
                     r, g, b = image[x, y] // color_coeff
                     array_of_values.append((char_index, (r, g, b), (x, y)))
         return array_of_values
+
+    def get_frame(self) -> cv2:
+        frame = pg.surfarray.array3d(self.surface)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        return cv2.transpose(frame)
+
+    def record_frame(self) -> None:
+        if self.record:
+            frame = self.get_frame()
+            self.recorder.write(frame)
+            cv2.imshow('Frame', frame)
+            if cv2.waitKey(1) & 0xFF == 27:
+                self.record = not self.record
+                cv2.destroyAllWindows()
 
     def draw_converted_image(self) -> None:
         image, gray_image = self.get_image()
@@ -116,3 +156,19 @@ class AsciiColorArtVideoConverter(AsciiArtVideoConverter):
     def draw_cv2_image(self) -> None:
         resized_cv2_image = cv2.resize(self.cv2_image, (640, 360), interpolation=cv2.INTER_AREA)
         cv2.imshow('img', resized_cv2_image)
+
+    def draw(self) -> None:
+        self.surface.fill('black')
+        self.draw_converted_image()
+
+    def run(self):
+        self.record = not self.record
+        while True:
+            for i in pg.event.get():
+                if i.type == pg.QUIT:
+                    exit()
+            self.record_frame()
+            self.draw()
+            pg.display.set_caption(str(self.clock.get_fps()))
+            pg.display.flip()
+            self.clock.tick()
